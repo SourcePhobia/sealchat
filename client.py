@@ -237,7 +237,7 @@ def on_signal(msg):
             print("[Handshake] Invalid signature. Connection aborted.")
             print("Peer persistent pub:", d['persistent_ed25519_pub'])
             return
-        if d['nonce'] in received_nonces or abs(int(time.time()) - d['timestamp']) > 60:
+        if d['nonce'] in received_nonces or abs(int(time.time()) - d['timestamp']) > 120:
             print("[Handshake] Replay detected. Connection aborted.")
             return
         received_nonces.add(d['nonce'])
