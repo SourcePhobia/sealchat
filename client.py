@@ -107,6 +107,10 @@ def hkdf_shared_key(their_x_pub_b64):
     aesgcm = AESGCM(shared_key)
     return key
 
+def hash_password(password: str):
+    # simple SHA-256 hash, result as hex string
+    return hashlib.sha256(password.encode()).hexdigest()
+
 def sign_handshake(pub_x, pub_sign, nonce, ts):
     msg_obj = {
         'x25519_pub': pub_x,
@@ -384,6 +388,7 @@ def input_thread():
                 continue
             CURRENT_LOBBY = parts[1]
             lobby_password = parts[2] if len(parts) > 2 else ""
+            lobby_password = hash_password(lobby_password)
             if not sio.connected:
                 print("Not connected to server yet. Try again in a moment.")
                 continue
@@ -396,6 +401,7 @@ def input_thread():
                 continue
             CURRENT_LOBBY = parts[1]
             lobby_password = parts[2] if len(parts) > 2 else ""
+            lobby_password = hash_password(lobby_password)
             sio.emit('join-lobby', {'name': CURRENT_LOBBY, 'password': lobby_password},
                     callback=lambda r: print("join-lobby:", r))
 
