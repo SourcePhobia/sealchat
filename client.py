@@ -201,7 +201,7 @@ def on_peer_joined(data):
         'data': {
             'x25519_pub': x_pub_b64,
             'ed25519_ephemeral_pub': sign_pub_ephemeral_b64,
-            'persistent_ed25519_pub': sign_pub_persistent_b64,
+            'persistent_ed25519_pub': persistent_sign_pub_b64,
             'nonce': nonce,
             'timestamp': ts,
             'signature': sign_handshake(x_pub_b64, sign_pub_ephemeral_b64, nonce, ts)
