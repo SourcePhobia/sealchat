@@ -200,26 +200,27 @@ def login():
     if r.status_code == 200:
         USER = r.json()
         print("Logged in as", USER)
+
         def wait_for_server_awake():
-    print("Checking if server is awake...")
-    while True:
-        try:
-            response = requests.get(SERVER_HTTP, timeout=5)
-            if response.status_code == 200:
-                print("Server is awake. Connecting now...")
-                return
-        except requests.RequestException:
-            pass
-        print("Server appears asleep. Waiting for it to wake up (Render free hosting can take up to 50 seconds)...")
-        time.sleep(5)
+            print("Checking if server is awake")
+            while True:
+                try:
+                    response = requests.get(SERVER_HTTP, timeout=5)
+                    if response.status_code == 200:
+                        print("Server is awake. Connecting now")
+                        return
+                except requests.RequestException:
+                    pass
+                print("Server appears asleep. Waiting for it to wake up")
+                time.sleep(5)
 
-# before connecting:
-wait_for_server_awake()
-sio.connect(SERVER_WS)
-
+        wait_for_server_awake()
+        sio.connect(SERVER_WS)
         return True
+
     print("Login failed:", r.text)
     return False
+
 
 @sio.event
 def connect():
@@ -383,5 +384,22 @@ if __name__ == '__main__':
     try:
         while True:
             time.sleep(1)
-    except KeyboardInterrupt:
-        pass
+        except KeyboardInterrupt:
+        print("\n[System] Shutting down and wiping session data...")
+        try:
+            if shared_key:
+                for i in range(len(shared_key)):
+                    shared_key = b'\x00' * len(shared_key)
+            if aesgcm:
+                del aesgcm
+            if received_nonces:
+                received_nonces.clear()
+            if PEER_INFO:
+                PEER_INFO.clear()
+            if USER:
+                USER.clear()
+        except Exception:
+            pass
+        time.sleep(0.3)
+        os._exit(0)
+
