@@ -8,11 +8,9 @@ UPDATE_URL = "https://raw.githubusercontent.com/SourcePhobia/sealchat/main/clien
 REQUIREMENTS_URL = "https://raw.githubusercontent.com/SourcePhobia/sealchat/refs/heads/autoupdate/requirements.txt"
 
 def is_package_installed(pkg_name):
-    """Check if a Python package is installed by trying to import it."""
     return importlib.util.find_spec(pkg_name) is not None
 
 def install_packages(packages):
-    """Install only missing packages dynamically."""
     for pkg in packages:
         if is_package_installed(pkg):
             print(f"[Bootstrapper] Package '{pkg}' is already installed.")
@@ -58,3 +56,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
