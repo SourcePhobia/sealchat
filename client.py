@@ -219,16 +219,14 @@ def on_peer_joined(data):
     Starts handshake with TOFU key pinning and fingerprint display.
     """
     global PEER_INFO
-    PEER_INFO = data['peer']  # must include 'username' and optionally 'persistent_ed25519_pub'
+    PEER_INFO = data['peer']
     peer_username = PEER_INFO['username']
     print(f"[System] Peer '{peer_username}' joined. Preparing handshake...")
 
-    # Get pinned key if exists
     pinned_pub = load_pinned_peer_key(peer_username)
     received_pub = PEER_INFO.get('persistent_ed25519_pub')
 
     if pinned_pub is None and received_pub:
-        # First-time TOFU trust
         save_pinned_peer_key(peer_username, received_pub)
         print(f"[Handshake] First-time trust for peer '{peer_username}'. Key pinned.")
         print(f"Peer fingerprint: {pubkey_fingerprint(received_pub)}")
@@ -239,13 +237,11 @@ def on_peer_joined(data):
             print(f"Stored fingerprint: {pubkey_fingerprint(pinned_pub)}")
             print(f"Server-reported fingerprint: {pubkey_fingerprint(received_pub)}")
             print("Possible MITM. You may want to verify this out-of-band.")
-            # optional: you could abort here, or continue cautiously
 
-    # Delay handshake slightly to ensure both peers are registered
     def delayed_handshake():
-        time.sleep(0.1)  # 100ms delay to ensure registration
+        time.sleep(0.1)
         gen_ephemeral_keys()
-        nonce = base64.b64encode(os.urandom(12)).decode()  # 12 bytes is safer for nonces
+        nonce = base64.b64encode(os.urandom(12)).decode()
         ts = int(time.time())
         payload = {
             'lobby': CURRENT_LOBBY,
@@ -282,24 +278,20 @@ def on_signal(msg):
         peer_username = PEER_INFO['username']
         received_pub = d['persistent_ed25519_pub']
 
-        # --- TOFU persistent key check ---
         pinned_pub = load_pinned_peer_key(peer_username)
 
         if pinned_pub is None:
-            # First time connecting to this peer
             save_pinned_peer_key(peer_username, received_pub)
             print(f"[Handshake] First-time trust for peer '{peer_username}'. Key pinned.")
         elif pinned_pub != received_pub:
-            # Key mismatch → possible MITM
             print(f"[Handshake WARNING] Persistent key mismatch for peer '{peer_username}'!")
             print(f"Stored fingerprint: {pubkey_fingerprint(pinned_pub)}")
             print(f"Received fingerprint: {pubkey_fingerprint(received_pub)}")
             print("Possible MITM. Connection aborted.")
-            return  # stop handshake
+            return
 
         print(f"[Handshake] Peer '{peer_username}' fingerprint: {pubkey_fingerprint(received_pub)}")
 
-        # --- existing signature verification ---
         if not verify_handshake_signature(
             received_pub,
             d['x25519_pub'],
@@ -311,13 +303,11 @@ def on_signal(msg):
             print("[Handshake] Invalid signature. Connection aborted.")
             return
 
-        # --- replay protection ---
         if d['nonce'] in received_nonces or abs(int(time.time()) - d['timestamp']) > 60:
             print("[Handshake] Replay detected. Connection aborted.")
             return
         received_nonces.add(d['nonce'])
 
-        # --- establish shared key if not already ---
         if not shared_key:
             hkdf_shared_key(d['x25519_pub'])
             print("[Handshake] Shared AES key established. Connection secured.")
