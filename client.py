@@ -418,7 +418,7 @@ def input_thread():
             CURRENT_LOBBY = None
             PEER_INFO = None
         elif cmd == 'help':
-            print("Commands: signup, login, createlobby <name>, joinlobby <name>, send <message>, leave, clear, help")
+            print("Commands: signup, login, createlobby <name> [password], joinlobby <name> [password], send <message>, leave, clear, help")
         else:
             print("unknown command")
             
