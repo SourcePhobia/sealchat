@@ -17,35 +17,29 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.exceptions import InvalidSignature
 
-# ------------------ CONFIG ------------------
 SERVER_HTTP = 'https://sealchatserver.onrender.com/'
-SERVER_WS = 'https://sealchatserver.onrender.com/'  # socket.io
+SERVER_WS = 'https://sealchatserver.onrender.com/'
 
 # ------------------ CLIENT STATE ------------------
 sio = socketio.Client(logger=False, engineio_logger=False)
-USER = None  # dict with userid, username
+USER = None 
 CURRENT_LOBBY = None
-PEER_INFO = None  # dict with userid, username
+PEER_INFO = None  
 
-# Handshake ephemeral keys
 x_priv = None
 x_pub_b64 = None
 sign_priv_ephemeral = None
 sign_pub_ephemeral_b64 = None
 
-# Persistent identity key
 sign_priv_persistent = None
 sign_pub_persistent_b64 = None
 PERSISTENT_KEY_FILE = os.path.expanduser("~/.sealchat/ed25519_priv.key")
 
-# Shared session AES
 shared_key = None
 aesgcm = None
 
-# Nonce tracking for replay protection
 received_nonces = set()
 
-# ------------------ UTILITIES ------------------
 def jsonb64(b: bytes):
     return base64.b64encode(b).decode('ascii')
 
@@ -57,7 +51,7 @@ def b64json(s):
 def load_or_create_persistent_key():
     global persistent_sign_priv, persistent_sign_pub_b64
     folder = os.path.dirname(PERSISTENT_KEY_FILE)
-    os.makedirs(folder, exist_ok=True)  # <-- create folder if missing
+    os.makedirs(folder, exist_ok=True) 
 
     if os.path.exists(PERSISTENT_KEY_FILE):
         with open(PERSISTENT_KEY_FILE, "rb") as f:
@@ -120,7 +114,7 @@ def verify_handshake_signature(peer_persistent_pub_b64, pub_x, pub_sign, nonce, 
 def encrypt_message(content):
     global aesgcm
     if not isinstance(content, str):
-        content = str(content)  # coerce to string
+        content = str(content) 
     payload = {
         "sender": USER['userid'],
         "username": USER['username'],
@@ -150,17 +144,15 @@ def decrypt_message(msg):
         raise ValueError("HMAC verification failed")
     data = aesgcm.decrypt(iv, ciphertext, None)
     obj = json.loads(data)
-    # enforce string type for critical fields
     for key in ['sender', 'username', 'lobby', 'timestamp', 'message']:
         if key in obj:
             obj[key] = str(obj[key])
     return obj
 
-# ------------------ AUTH / LOBBY ------------------
 def signup():
     username = input("username: ").strip()
     password = getpass.getpass("password: ")
-    load_or_create_persistent_key()  # make sure key exists
+    load_or_create_persistent_key() 
     payload = {
         "username": username,
         "password": password,
@@ -173,7 +165,7 @@ def login():
     global USER
     username = input("username: ").strip()
     password = getpass.getpass("password: ")
-    load_or_create_persistent_key()  # ensure persistent key exists
+    load_or_create_persistent_key()
     payload = {
         "username": username,
         "password": password,
@@ -183,13 +175,12 @@ def login():
     if r.status_code == 200:
         USER = r.json()
         print("Logged in as", USER)
-        sio.connect(SERVER_WS)  # connect after login
+        sio.connect(SERVER_WS)
         return True
     print("Login failed:", r.text)
     return False
 
 
-# ------------------ SOCKET.IO EVENTS ------------------
 @sio.event
 def connect():
     print("[Socket] Connected")
@@ -226,7 +217,6 @@ def on_signal(msg):
     t = msg.get('type')
     d = msg.get('data', {})
     if t in ('hello', 'leader-pubkeys', 'joiner-pubkeys'):
-        # Verify signature
         if not verify_handshake_signature(
             d['persistent_ed25519_pub'],
             d['x25519_pub'],
@@ -237,18 +227,15 @@ def on_signal(msg):
         ):
             print("[Handshake] Invalid signature. Connection aborted.")
             return
-        # Replay protection
         if d['nonce'] in received_nonces or abs(int(time.time()) - d['timestamp']) > 60:
             print("[Handshake] Replay detected. Connection aborted.")
             return
         received_nonces.add(d['nonce'])
 
-        # Compute shared key if joiner or leader
         if not shared_key:
             hkdf_shared_key(d['x25519_pub'])
             print("[Handshake] Shared AES key established. Connection secured.")
 
-# ------------------ MESSAGE EVENTS ------------------
 @sio.on('encrypted-message')
 def on_encrypted_message(msg):
     try:
@@ -257,7 +244,6 @@ def on_encrypted_message(msg):
     except Exception as e:
         print("Failed to decrypt/verify message:", e)
 
-# ------------------ USER INPUT ------------------
 def input_thread():
     global CURRENT_LOBBY, PEER_INFO
     while True:
@@ -294,7 +280,6 @@ def input_thread():
         else:
             print("unknown command")
 
-# ------------------ MAIN ------------------
 if __name__ == '__main__':
     print("Secure E2EE messaging client")
     threading.Thread(target=input_thread, daemon=True).start()
