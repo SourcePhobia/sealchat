@@ -184,7 +184,6 @@ def login():
     return False
 
 
-@sio.event
 def connect():
     print("[Socket] Connected")
     if USER:
@@ -259,6 +258,9 @@ def input_thread():
         elif cmd == 'login':
             login()
         elif cmd == 'createlobby':
+            if not sio.connected:
+                print("Not connected to server yet. Try again in a moment.")
+                continue
             if len(parts) < 2: print("usage: createlobby <name>"); continue
             CURRENT_LOBBY = parts[1]
             sio.emit('create-lobby', {'name': CURRENT_LOBBY}, callback=lambda r: print("create-lobby:", r))
