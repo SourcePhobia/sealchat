@@ -98,8 +98,8 @@ def hkdf_shared_key(their_x_pub_b64):
     return key
 
 def sign_handshake(pub_x, pub_sign, nonce, ts):
-    msg = (pub_x + pub_sign + nonce + str(ts) + sign_pub_persistent_b64).encode()
-    return jsonb64(sign_priv_persistent.sign(msg))
+    msg = (pub_x + pub_sign + nonce + str(ts) + persistent_sign_pub_b64).encode()
+    return jsonb64(persistent_sign_priv.sign(msg))
 
 def verify_handshake_signature(peer_persistent_pub_b64, pub_x, pub_sign, nonce, ts, signature_b64):
     peer_pub = ed25519.Ed25519PublicKey.from_public_bytes(b64json(peer_persistent_pub_b64))
