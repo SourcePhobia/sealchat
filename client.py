@@ -18,8 +18,8 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.exceptions import InvalidSignature
 
 # ------------------ CONFIG ------------------
-SERVER_HTTP = 'http://localhost:3000'
-SERVER_WS = 'http://localhost:3000'  # socket.io
+SERVER_HTTP = 'https://sealchatserver.onrender.com/'
+SERVER_WS = 'https://sealchatserver.onrender.com/'  # socket.io
 
 # ------------------ CLIENT STATE ------------------
 sio = socketio.Client(logger=False, engineio_logger=False)
@@ -56,6 +56,9 @@ def b64json(s):
 
 def load_or_create_persistent_key():
     global persistent_sign_priv, persistent_sign_pub_b64
+    folder = os.path.dirname(PERSISTENT_KEY_FILE)
+    os.makedirs(folder, exist_ok=True)  # <-- create folder if missing
+
     if os.path.exists(PERSISTENT_KEY_FILE):
         with open(PERSISTENT_KEY_FILE, "rb") as f:
             persistent_sign_priv = ed25519.Ed25519PrivateKey.from_private_bytes(f.read())
@@ -75,6 +78,7 @@ def load_or_create_persistent_key():
             format=serialization.PublicFormat.Raw
         )
     ).decode('ascii')
+
 
 load_or_create_persistent_key()
 
@@ -115,6 +119,8 @@ def verify_handshake_signature(peer_persistent_pub_b64, pub_x, pub_sign, nonce, 
 
 def encrypt_message(content):
     global aesgcm
+    if not isinstance(content, str):
+        content = str(content)  # coerce to string
     payload = {
         "sender": USER['userid'],
         "username": USER['username'],
@@ -143,7 +149,12 @@ def decrypt_message(msg):
     if not hmac.compare_digest(mac, expected_mac):
         raise ValueError("HMAC verification failed")
     data = aesgcm.decrypt(iv, ciphertext, None)
-    return json.loads(data)
+    obj = json.loads(data)
+    # enforce string type for critical fields
+    for key in ['sender', 'username', 'lobby', 'timestamp', 'message']:
+        if key in obj:
+            obj[key] = str(obj[key])
+    return obj
 
 # ------------------ AUTH / LOBBY ------------------
 def signup():
@@ -272,7 +283,7 @@ def input_thread():
                 continue
             content = " ".join(parts[1:])
             encrypted = encrypt_message(content)
-            sio.emit('encrypted-message', {**encrypted, 'lobby': CURRENT_LOBBY, 'toUserId': PEER_INFO['userid']})
+            sio.emit('encrypted-message', {**encrypted, 'lobby': str(CURRENT_LOBBY), 'toUserId': str(PEER_INFO['userid'])})
         elif cmd == 'leave':
             if not CURRENT_LOBBY: continue
             sio.emit('leave-lobby', {'lobby': CURRENT_LOBBY}, callback=lambda r: print("left:", r))
