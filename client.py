@@ -1,4 +1,4 @@
-# client_secure.py
+# client.py
 import requests
 import socketio
 import threading
@@ -20,7 +20,6 @@ from cryptography.exceptions import InvalidSignature
 SERVER_HTTP = 'https://sealchatserver.onrender.com/'
 SERVER_WS = 'https://sealchatserver.onrender.com/'
 
-# ------------------ CLIENT STATE ------------------
 sio = socketio.Client(logger=False, engineio_logger=False)
 USER = None 
 CURRENT_LOBBY = None
