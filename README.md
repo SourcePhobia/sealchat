@@ -65,8 +65,8 @@ Type "help" to see available commands
 |---------|-------------|
 | `signup` | Create a new user account. |
 | `login` | Login to an existing account. |
-| `createlobby <name>` | Create a new lobby. |
-| `joinlobby <name>` | Join an existing lobby. |
+| `createlobby <name> [password]` | Create a new lobby. |
+| `joinlobby <name> [password]` | Join an existing lobby. |
 | `send <message>` | Send a secure message to the connected peer. |
 | `leave` | Leave the current lobby. |
 | `clear` | Clears session data locally. |
