@@ -47,23 +47,30 @@ def b64json(s):
 
 
 
-def load_or_create_persistent_key():
+def load_or_create_persistent_key(username=None):
     global persistent_sign_priv, persistent_sign_pub_b64
-    folder = os.path.dirname(PERSISTENT_KEY_FILE)
-    os.makedirs(folder, exist_ok=True) 
 
-    if os.path.exists(PERSISTENT_KEY_FILE):
-        with open(PERSISTENT_KEY_FILE, "rb") as f:
+    base_folder = os.path.expanduser("~/.sealchat")
+    if username:
+        folder = os.path.join(base_folder, username)
+    else:
+        folder = base_folder
+
+    os.makedirs(folder, exist_ok=True)
+    key_path = os.path.join(folder, "ed25519_priv.key")
+
+    if os.path.exists(key_path):
+        with open(key_path, "rb") as f:
             persistent_sign_priv = ed25519.Ed25519PrivateKey.from_private_bytes(f.read())
     else:
         persistent_sign_priv = ed25519.Ed25519PrivateKey.generate()
-        with open(PERSISTENT_KEY_FILE, "wb") as f:
+        with open(key_path, "wb") as f:
             f.write(persistent_sign_priv.private_bytes(
                 encoding=serialization.Encoding.Raw,
                 format=serialization.PrivateFormat.Raw,
                 encryption_algorithm=serialization.NoEncryption()
             ))
-        os.chmod(PERSISTENT_KEY_FILE, 0o600)
+        os.chmod(key_path, 0o600)
 
     persistent_sign_pub_b64 = base64.b64encode(
         persistent_sign_priv.public_key().public_bytes(
@@ -71,9 +78,6 @@ def load_or_create_persistent_key():
             format=serialization.PublicFormat.Raw
         )
     ).decode('ascii')
-
-
-load_or_create_persistent_key()
 
 def gen_ephemeral_keys():
     global x_priv, x_pub_b64, sign_priv_ephemeral, sign_pub_ephemeral_b64
@@ -151,7 +155,7 @@ def decrypt_message(msg):
 def signup():
     username = input("username: ").strip()
     password = getpass.getpass("password: ")
-    load_or_create_persistent_key() 
+    load_or_create_persistent_key(username) 
     payload = {
         "username": username,
         "password": password,
@@ -164,7 +168,7 @@ def login():
     global USER
     username = input("username: ").strip()
     password = getpass.getpass("password: ")
-    load_or_create_persistent_key()
+    load_or_create_persistent_key(username)
     payload = {
         "username": username,
         "password": password,
