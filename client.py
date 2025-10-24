@@ -48,6 +48,9 @@ def jsonb64(b: bytes):
 def b64json(s):
     return base64.b64decode(s.encode('ascii'))
 
+def canonical_json(obj):
+    return json.dumps(obj, sort_keys=True, separators=(',', ':')).encode('utf-8')
+
 
 
 def load_or_create_persistent_key(username=None):
@@ -105,17 +108,33 @@ def hkdf_shared_key(their_x_pub_b64):
     return key
 
 def sign_handshake(pub_x, pub_sign, nonce, ts):
-    msg = (pub_x + pub_sign + nonce + str(ts) + persistent_sign_pub_b64).encode()
-    return jsonb64(persistent_sign_priv.sign(msg))
+    msg_obj = {
+        'x25519_pub': pub_x,
+        'ed25519_ephemeral_pub': pub_sign,
+        'nonce': nonce,
+        'timestamp': ts,
+        'persistent_ed25519_pub': persistent_sign_pub_b64
+    }
+    msg_bytes = canonical_json(msg_obj)
+    return jsonb64(persistent_sign_priv.sign(msg_bytes))
+
 
 def verify_handshake_signature(peer_persistent_pub_b64, pub_x, pub_sign, nonce, ts, signature_b64):
     peer_pub = ed25519.Ed25519PublicKey.from_public_bytes(b64json(peer_persistent_pub_b64))
-    msg = (pub_x + pub_sign + nonce + str(ts) + peer_persistent_pub_b64).encode()
+    msg_obj = {
+        'x25519_pub': pub_x,
+        'ed25519_ephemeral_pub': pub_sign,
+        'nonce': nonce,
+        'timestamp': ts,
+        'persistent_ed25519_pub': peer_persistent_pub_b64
+    }
+    msg_bytes = canonical_json(msg_obj)
     try:
-        peer_pub.verify(b64json(signature_b64), msg)
+        peer_pub.verify(b64json(signature_b64), msg_bytes)
         return True
     except InvalidSignature:
         return False
+
 
 def encrypt_message(content):
     global aesgcm
