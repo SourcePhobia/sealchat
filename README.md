@@ -69,6 +69,7 @@ Type "help" to see available commands
 | `joinlobby <name>` | Join an existing lobby. |
 | `send <message>` | Send a secure message to the connected peer. |
 | `leave` | Leave the current lobby. |
+| `clear` | Clears session data locally. |
 | `help` | Show all commands. |
 
 ---
