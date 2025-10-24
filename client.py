@@ -200,7 +200,23 @@ def login():
     if r.status_code == 200:
         USER = r.json()
         print("Logged in as", USER)
-        sio.connect(SERVER_WS)
+        def wait_for_server_awake():
+    print("Checking if server is awake...")
+    while True:
+        try:
+            response = requests.get(SERVER_HTTP, timeout=5)
+            if response.status_code == 200:
+                print("Server is awake. Connecting now...")
+                return
+        except requests.RequestException:
+            pass
+        print("Server appears asleep. Waiting for it to wake up (Render free hosting can take up to 50 seconds)...")
+        time.sleep(5)
+
+# before connecting:
+wait_for_server_awake()
+sio.connect(SERVER_WS)
+
         return True
     print("Login failed:", r.text)
     return False
