@@ -379,24 +379,26 @@ def input_thread():
         elif cmd == 'clear':
             clear_session_data()
         elif cmd == 'createlobby':
-    if len(parts) < 2:
-        print("usage: createlobby <name> [password]")
-        continue
-    CURRENT_LOBBY = parts[1]
-    lobby_password = parts[2] if len(parts) > 2 else ""
-    if not sio.connected:
-        print("Not connected to server yet. Try again in a moment.")
-        continue
-    sio.emit('create-lobby', {'name': CURRENT_LOBBY, 'password': lobby_password},
-             callback=lambda r: print("create-lobby:", r))
+            if len(parts) < 2:
+                print("usage: createlobby <name> [password]")
+                continue
+            CURRENT_LOBBY = parts[1]
+            lobby_password = parts[2] if len(parts) > 2 else ""
+            if not sio.connected:
+                print("Not connected to server yet. Try again in a moment.")
+                continue
+            sio.emit('create-lobby', {'name': CURRENT_LOBBY, 'password': lobby_password},
+                     callback=lambda r: print("create-lobby:", r))
+
         elif cmd == 'joinlobby':
-    if len(parts) < 2:
-        print("usage: joinlobby <name> [password]")
-        continue
-    CURRENT_LOBBY = parts[1]
-    lobby_password = parts[2] if len(parts) > 2 else ""
-    sio.emit('join-lobby', {'name': CURRENT_LOBBY, 'password': lobby_password},
-             callback=lambda r: print("join-lobby:", r))
+            if len(parts) < 2:
+                print("usage: joinlobby <name> [password]")
+                continue
+            CURRENT_LOBBY = parts[1]
+            lobby_password = parts[2] if len(parts) > 2 else ""
+            sio.emit('join-lobby', {'name': CURRENT_LOBBY, 'password': lobby_password},
+                    callback=lambda r: print("join-lobby:", r))
+
         elif cmd == 'send':
             if not PEER_INFO or not shared_key:
                 print("No secure connection yet.")
