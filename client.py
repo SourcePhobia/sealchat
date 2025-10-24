@@ -158,6 +158,29 @@ def encrypt_message(content):
         "hmac": jsonb64(mac)
     }
 
+def clear_session_data():
+    global shared_key, aesgcm, received_nonces, PEER_INFO, USER, CURRENT_LOBBY
+    print("Wiping all in-memory session data")
+    try:
+        if shared_key:
+            shared_key = b'\x00' * len(shared_key)
+        if aesgcm:
+            del aesgcm
+            aesgcm = None
+        if received_nonces:
+            received_nonces.clear()
+        if PEER_INFO:
+            PEER_INFO.clear()
+            PEER_INFO = None
+        if USER:
+            USER.clear()
+            USER = None
+        CURRENT_LOBBY = None
+    except Exception:
+        pass
+    print("Session data cleared")
+
+
 def decrypt_message(msg):
     global aesgcm
     ciphertext = b64json(msg['ciphertext'])
@@ -238,7 +261,7 @@ def on_peer_joined(data):
     global PEER_INFO
     PEER_INFO = data['peer']
     peer_username = PEER_INFO['username']
-    print(f"[System] Peer '{peer_username}' joined. Preparing handshake...")
+    print(f"Peer '{peer_username}' joined. Preparing handshake")
 
     pinned_pub = load_pinned_peer_key(peer_username)
     received_pub = PEER_INFO.get('persistent_ed25519_pub')
@@ -341,14 +364,20 @@ def on_encrypted_message(msg):
 def input_thread():
     global CURRENT_LOBBY, PEER_INFO
     while True:
-        raw = input("> ").strip()
-        if not raw: continue
+        try:
+            raw = input("> ").strip()
+        except EOFError:
+            break
+        if not raw:
+            continue
         parts = raw.split()
         cmd = parts[0].lower()
         if cmd == 'signup':
             signup()
         elif cmd == 'login':
             login()
+        elif cmd == 'clear':
+            clear_session_data()
         elif cmd == 'createlobby':
             if not sio.connected:
                 print("Not connected to server yet. Try again in a moment.")
@@ -373,7 +402,7 @@ def input_thread():
             CURRENT_LOBBY = None
             PEER_INFO = None
         elif cmd == 'help':
-            print("Commands: signup, login, createlobby <name>, joinlobby <name>, send <message>, leave, help")
+            print("Commands: signup, login, createlobby <name>, joinlobby <name>, send <message>, leave, clear, help")
         else:
             print("unknown command")
             
@@ -388,7 +417,7 @@ if __name__ == "__main__":
             time.sleep(1)
 
     except KeyboardInterrupt:
-        print("\n[System] Shutting down and wiping session data...")
+        print("\nShutting down and wiping session data")
 
         try:
             if 'shared_key' in globals() and shared_key:
