@@ -376,7 +376,6 @@ def input_thread():
             print("Commands: signup, login, createlobby <name>, joinlobby <name>, send <message>, leave, help")
         else:
             print("unknown command")
-            
 if __name__ == "__main__":
     print("Seal Chat E2EE messaging service")
     print('Type "help" to see available commands')
