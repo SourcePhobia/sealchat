@@ -376,20 +376,16 @@ def input_thread():
             print("Commands: signup, login, createlobby <name>, joinlobby <name>, send <message>, leave, help")
         else:
             print("unknown command")
+            
 if __name__ == "__main__":
-    print("Seal Chat E2EE messaging service")
-    print('Type "help" to see available commands')
-    threading.Thread(target=input_thread, daemon=True).start()
-
     try:
-        while True:
-            time.sleep(1)
-
+        if login():
+            main_loop() 
     except KeyboardInterrupt:
         print("\n[System] Shutting down and wiping session data...")
 
         try:
-            if 'shared_key' in globals() and shared_key:
+            if 'shared_key' in globals():
                 shared_key = b'\x00' * len(shared_key)
             if 'aesgcm' in globals():
                 del aesgcm
@@ -399,8 +395,9 @@ if __name__ == "__main__":
                 PEER_INFO.clear()
             if 'USER' in globals():
                 USER.clear()
-        except Exception:
-            pass
+        except Exception as e:
+            print("Cleanup warning:", e)
 
         time.sleep(0.3)
+        print("[System] Session data wiped. Goodbye.")
         os._exit(0)
