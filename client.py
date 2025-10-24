@@ -384,7 +384,7 @@ if __name__ == '__main__':
     try:
         while True:
             time.sleep(1)
-        except KeyboardInterrupt:
+    except KeyboardInterrupt:
         print("\n[System] Shutting down and wiping session data...")
         try:
             if shared_key:
