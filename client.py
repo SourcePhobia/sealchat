@@ -380,7 +380,6 @@ def input_thread():
 if __name__ == "__main__":
     print("Seal Chat E2EE messaging service")
     print('Type "help" to see available commands')
-
     threading.Thread(target=input_thread, daemon=True).start()
 
     try:
