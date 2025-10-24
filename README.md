@@ -35,7 +35,7 @@ cd sealchat
 pip install -r requirements.txt
 ```
 or:
-Run the loader.bat
+Run loader.bat
 
 **Required Python packages:**
 
