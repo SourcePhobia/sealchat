@@ -51,7 +51,18 @@ def b64json(s):
 def canonical_json(obj):
     return json.dumps(obj, sort_keys=True, separators=(',', ':')).encode('utf-8')
 
-
+def wait_for_server_awake():
+    print("Checking if server is awake")
+    while True:
+        try:
+            response = requests.get(SERVER_HTTP, timeout=5)
+            if response.status_code == 200:
+                print("Server is awake. Connecting now")
+                return
+        except requests.RequestException:
+            pass
+        print("Server appears asleep. Waiting for it to wake up")
+        time.sleep(5)
 
 def load_or_create_persistent_key(username=None):
     global persistent_sign_priv, persistent_sign_pub_b64
@@ -227,21 +238,6 @@ def login():
     if r.status_code == 200:
         USER = r.json()
         print("Logged in as", USER)
-
-        def wait_for_server_awake():
-            print("Checking if server is awake")
-            while True:
-                try:
-                    response = requests.get(SERVER_HTTP, timeout=5)
-                    if response.status_code == 200:
-                        print("Server is awake. Connecting now")
-                        return
-                except requests.RequestException:
-                    pass
-                print("Server appears asleep. Waiting for it to wake up")
-                time.sleep(5)
-
-        wait_for_server_awake()
         sio.connect(SERVER_WS)
         return True
 
@@ -426,6 +422,9 @@ if __name__ == "__main__":
     print("Seal Chat E2EE messaging service")
     print('Type "help" to see available commands')
 
+
+    wait_for_server_awake()
+    
     threading.Thread(target=input_thread, daemon=True).start()
 
     try:
