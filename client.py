@@ -30,8 +30,8 @@ x_pub_b64 = None
 sign_priv_ephemeral = None
 sign_pub_ephemeral_b64 = None
 
-sign_priv_persistent = None
-sign_pub_persistent_b64 = None
+persistent_sign_priv = None
+persistent_sign_pub_b64 = None
 PERSISTENT_KEY_FILE = os.path.expanduser("~/.sealchat/ed25519_priv.key")
 
 shared_key = None
@@ -193,24 +193,31 @@ def connect():
 def on_peer_joined(data):
     global PEER_INFO
     PEER_INFO = data['peer']
-    print(f"[System] Peer {PEER_INFO['username']} joined. Starting handshake.")
-    gen_ephemeral_keys()
-    nonce = base64.b64encode(os.urandom(8)).decode()
-    ts = int(time.time())
-    payload = {
-        'lobby': CURRENT_LOBBY,
-        'toUserId': PEER_INFO['userid'],
-        'type': 'hello',
-        'data': {
-            'x25519_pub': x_pub_b64,
-            'ed25519_ephemeral_pub': sign_pub_ephemeral_b64,
-            'persistent_ed25519_pub': persistent_sign_pub_b64,
-            'nonce': nonce,
-            'timestamp': ts,
-            'signature': sign_handshake(x_pub_b64, sign_pub_ephemeral_b64, nonce, ts)
+    print(f"[System] Peer {PEER_INFO['username']} joined. Waiting for registration...")
+
+    # wait until peer socket is fully registered
+    def delayed_handshake():
+        time.sleep(0.1)  # 100ms delay to ensure registration
+        gen_ephemeral_keys()
+        nonce = base64.b64encode(os.urandom(8)).decode()
+        ts = int(time.time())
+        payload = {
+            'lobby': CURRENT_LOBBY,
+            'toUserId': PEER_INFO['userid'],
+            'type': 'hello',
+            'data': {
+                'x25519_pub': x_pub_b64,
+                'ed25519_ephemeral_pub': sign_pub_ephemeral_b64,
+                'persistent_ed25519_pub': persistent_sign_pub_b64,
+                'nonce': nonce,
+                'timestamp': ts,
+                'signature': sign_handshake(x_pub_b64, sign_pub_ephemeral_b64, nonce, ts)
+            }
         }
-    }
-    sio.emit('signal', payload)
+        sio.emit('signal', payload)
+
+    threading.Thread(target=delayed_handshake, daemon=True).start()
+
 
 @sio.on('signal')
 def on_signal(msg):
