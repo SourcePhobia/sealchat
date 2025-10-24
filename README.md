@@ -34,6 +34,8 @@ cd sealchat
 ```bash
 pip install -r requirements.txt
 ```
+or:
+Run the loader.bat
 
 **Required Python packages:**
 
