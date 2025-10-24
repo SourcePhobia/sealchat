@@ -183,7 +183,7 @@ def login():
     print("Login failed:", r.text)
     return False
 
-
+@sio.event
 def connect():
     print("[Socket] Connected")
     if USER:
