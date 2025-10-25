@@ -42,6 +42,28 @@ aesgcm = None
 
 received_nonces = set()
 
+def pinned_key_path(username):
+    return os.path.join(PINNED_KEYS_DIR, f"{username}.key")
+
+def load_pinned_peer_key(username):
+    path = pinned_key_path(username)
+    if os.path.exists(path):
+        with open(path, "r") as f:
+            return f.read().strip()
+    return None
+
+def save_pinned_peer_key(username, pub_b64):
+    path = pinned_key_path(username)
+    with open(path, "w") as f:
+        f.write(pub_b64)
+
+def pubkey_fingerprint(pub_b64):
+    key_bytes = b64json(pub_b64)
+    digest = hashlib.sha256(key_bytes).hexdigest()
+    # short fingerprint for display
+    return ":".join(digest[i:i+2] for i in range(0, 16, 2))
+
+
 def jsonb64(b: bytes):
     return base64.b64encode(b).decode('ascii')
 
