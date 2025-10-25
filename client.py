@@ -306,6 +306,7 @@ def on_peer_joined(data):
         nonce = base64.b64encode(os.urandom(12)).decode()
         ts = int(time.time())
         payload = {
+            "from": {"userid": USER['userid'], "username": USER['username']},
             'lobby': CURRENT_LOBBY,
             'toUserId': PEER_INFO['userid'],
             'type': 'hello',
