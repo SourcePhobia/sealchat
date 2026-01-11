@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-REM FALSE DETECTED BY ANTI VIRUSES!
+REM
 
 python --version >nul 2>&1
 IF ERRORLEVEL 1 (
@@ -31,4 +31,5 @@ echo [Launcher] Running bootstrapper...
 python bootstrapper.py
 
 pause
+
 
