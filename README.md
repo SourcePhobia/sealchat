@@ -25,7 +25,7 @@ Seal Chat is an open source Python-based, end-to-end encrypted (E2EE) chat clien
 1. **Clone the repository**:
 
 ```bash
-git clone https://github.com/yourusername/sealchat.git
+git clone https://github.com/SourcePhobia/sealchat.git
 cd sealchat
 ```
 
