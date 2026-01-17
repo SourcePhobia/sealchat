@@ -15,7 +15,7 @@ Seal Chat is an open source Python-based, end-to-end encrypted (E2EE) chat clien
 - AES-GCM encryption for all messages.
 - HMAC verification for defense in depth.
 - Replay protection with nonces and timestamps.
-- Console fingerprint display for out-of-band verification.
+- Console fingerprint display for out of band verification.
 - Multi-peer lobby support via Socket.IO.
 
 ---
